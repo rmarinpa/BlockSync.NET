@@ -1,0 +1,6 @@
+@BlockSync.API_HostAddress = http://localhost:5049
+
+GET {{BlockSync.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
