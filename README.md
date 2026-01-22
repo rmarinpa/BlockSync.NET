@@ -40,9 +40,7 @@ El sistema utiliza **Clean Architecture** y sigue el patrón de **Particionamien
 ## 🛠️ Instalación y Ejecución
 
 1.  **Clonar el repositorio:**
-    ```bash
-    git clone [https://github.com/tu-usuario/merkleflow.git](https://github.com/tu-usuario/merkleflow.git)
-    ```
+
 2.  **Ejecutar la API:**
     Abrir la solución en Visual Studio o VS Code y ejecutar el perfil `https`.
 3.  **Probar con Swagger:**
@@ -72,7 +70,7 @@ Para demostrar la potencia del motor, utiliza los endpoints de simulación inclu
 
 | Métrica | ETL Legacy (Actual) | MerkleFlow | Mejora |
 | :--- | :--- | :--- | :--- |
-| **Tiempo Proc.** | 13 Horas | < 20 Minutos | **~97%** |
+| **Tiempo Proc.** | Aprox tu ETL | < 20 Minutos | **~97%** |
 | **Uso de Red** | 50 GB / día | 50 MB / día | **Reducción masiva** |
 | **RAM Server** | Alta (Picos de OOM) | Baja (Estable) | **Estabilidad** |
 
