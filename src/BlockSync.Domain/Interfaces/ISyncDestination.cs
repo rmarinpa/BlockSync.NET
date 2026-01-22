@@ -53,4 +53,9 @@ public interface ISyncDestination
     /// </summary>
     /// <param name="periodo">Periodo en formato "yyyy-MM"</param>
     Task<List<Venta>> GetBlockDataAsync(string periodo);
+
+    /// <summary>
+    /// Obtiene TODOS los registros (para diagnósticos)
+    /// </summary>
+    Task<List<Venta>> GetAllDataAsync();
 }

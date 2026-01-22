@@ -3,7 +3,7 @@ using System.Text;
 using BlockSync.Domain.Entities;
 using BlockSync.Domain.ValueObjects;
 
-namespace BlockSync.Infrastructure.Services;
+namespace BlockSync.Application.Services;
 
 /// <summary>
 /// Servicio para cálculo de hashes MD5 de bloques.

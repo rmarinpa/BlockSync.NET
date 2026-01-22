@@ -32,4 +32,9 @@ public interface ISyncEngine
     /// Reinicia el sistema completo
     /// </summary>
     Task ResetSystemAsync();
+
+    /// <summary>
+    /// Obtiene diagnóstico detallado del sistema para demostrar datos reales
+    /// </summary>
+    Task<DiagnosticsResponse> GetDiagnosticsAsync();
 }

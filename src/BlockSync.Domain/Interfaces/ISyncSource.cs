@@ -34,4 +34,9 @@ public interface ISyncSource
     /// Reinicia el origen a su estado inicial
     /// </summary>
     Task ResetAsync();
+
+    /// <summary>
+    /// Obtiene TODOS los registros (para diagnósticos)
+    /// </summary>
+    Task<List<Venta>> GetAllDataAsync();
 }

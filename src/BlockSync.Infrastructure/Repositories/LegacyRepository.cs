@@ -1,6 +1,7 @@
 using BlockSync.Domain.Entities;
 using BlockSync.Domain.Interfaces;
 using BlockSync.Domain.ValueObjects;
+using BlockSync.Application.Services;
 using BlockSync.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 
@@ -88,5 +89,26 @@ public class LegacyRepository : ISyncSource
         _logger.LogInformation("🔄 Reiniciando repositorio legacy...");
         Initialize();
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Obtiene TODOS los registros (para diagnósticos)
+    /// </summary>
+    public Task<List<Venta>> GetAllDataAsync()
+    {
+        var allData = _data.Values
+            .SelectMany(v => v)
+            .Select(v => new Venta
+            {
+                Id = v.Id,
+                FechaVenta = v.FechaVenta,
+                Cliente = v.Cliente,
+                Producto = v.Producto,
+                Monto = v.Monto,
+                Periodo = v.Periodo
+            })
+            .ToList();
+
+        return Task.FromResult(allData);
     }
 }

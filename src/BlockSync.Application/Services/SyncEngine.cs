@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using BlockSync.Application.DTOs;
 using BlockSync.Application.Interfaces;
+using BlockSync.Domain.Entities;
 using BlockSync.Domain.Interfaces;
 using BlockSync.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -307,5 +308,122 @@ public class SyncEngine : ISyncEngine
         await _destination.ClearAllAsync();
         await _source.ResetAsync();
         _logger.LogInformation("✅ Sistema reiniciado exitosamente");
+    }
+
+    /// <summary>
+    /// Obtiene diagnóstico detallado del sistema para demostrar datos reales
+    /// </summary>
+    public async Task<DiagnosticsResponse> GetDiagnosticsAsync()
+    {
+        _logger.LogInformation("🔍 Generando diagnóstico detallado del sistema...");
+
+        // Obtener todos los datos
+        var sourceData = await _source.GetAllDataAsync();
+        var destData = await _destination.GetAllDataAsync();
+
+        var response = new DiagnosticsResponse
+        {
+            Timestamp = DateTime.UtcNow,
+            Sistema = "BlockSync.NET - Diagnóstico Completo",
+            Origen = GenerateStatistics(sourceData, "Origen"),
+            Destino = GenerateStatistics(destData, "Destino"),
+            MuestraAleatoria = GenerateSampleRecords(sourceData, 10),
+            Memoria = GetMemoryInfo()
+        };
+
+        // Generar resumen
+        response.Resumen = $"Sistema con {response.Origen.TotalRegistros:N0} registros en origen " +
+                          $"({response.Origen.TotalBloques} bloques) y {response.Destino.TotalRegistros:N0} en destino. " +
+                          $"Memoria utilizada: {response.Memoria.MemoriaUsadaMB:N0} MB. " +
+                          $"Datos generados con {response.Origen.ClientesUnicos:N0} clientes únicos y " +
+                          $"{response.Origen.ProductosUnicos:N0} productos únicos.";
+
+        _logger.LogInformation("✅ Diagnóstico generado exitosamente");
+        return response;
+    }
+
+    private DataStatistics GenerateStatistics(List<Venta> data, string source)
+    {
+        if (!data.Any())
+        {
+            return new DataStatistics
+            {
+                TotalRegistros = 0,
+                TotalBloques = 0
+            };
+        }
+
+        var grouped = data.GroupBy(v => v.Periodo).ToList();
+
+        var stats = new DataStatistics
+        {
+            TotalRegistros = data.Count,
+            TotalBloques = grouped.Count,
+            MontoTotal = data.Sum(v => v.Monto),
+            MontoPromedio = data.Average(v => v.Monto),
+            MontoMinimo = data.Min(v => v.Monto),
+            MontoMaximo = data.Max(v => v.Monto),
+            PrimerRegistroId = data.First().Id.ToString(),
+            UltimoRegistroId = data.Last().Id.ToString(),
+            FechaMinima = data.Min(v => v.FechaVenta),
+            FechaMaxima = data.Max(v => v.FechaVenta),
+            ClientesUnicos = data.Select(v => v.Cliente).Distinct().Count(),
+            ProductosUnicos = data.Select(v => v.Producto).Distinct().Count(),
+            Top10PeriodosPorRegistros = grouped
+                .OrderByDescending(g => g.Count())
+                .Take(10)
+                .Select(g => new PeriodInfo
+                {
+                    Periodo = g.Key,
+                    Registros = g.Count(),
+                    MontoTotal = g.Sum(v => v.Monto),
+                    Hash = HashCalculator.CalculateHash(g.ToList())
+                })
+                .ToList()
+        };
+
+        _logger.LogInformation($"📊 Estadísticas de {source}: {stats.TotalRegistros:N0} registros, " +
+                              $"{stats.ClientesUnicos:N0} clientes únicos, " +
+                              $"{stats.ProductosUnicos:N0} productos únicos");
+
+        return stats;
+    }
+
+    private List<SampleRecord> GenerateSampleRecords(List<Venta> data, int count)
+    {
+        if (!data.Any()) return new List<SampleRecord>();
+
+        var random = new Random();
+        return Enumerable.Range(0, Math.Min(count, data.Count))
+            .Select(_ =>
+            {
+                var venta = data[random.Next(data.Count)];
+                return new SampleRecord
+                {
+                    Id = venta.Id.ToString(),
+                    Fecha = venta.FechaVenta,
+                    Cliente = venta.Cliente,
+                    Producto = venta.Producto,
+                    Monto = venta.Monto,
+                    Periodo = venta.Periodo
+                };
+            })
+            .ToList();
+    }
+
+    private MemoryInfo GetMemoryInfo()
+    {
+        var currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+        var memoryUsed = currentProcess.WorkingSet64 / 1024 / 1024; // MB
+        var totalMemory = GC.GetTotalMemory(false) / 1024 / 1024; // MB
+
+        return new MemoryInfo
+        {
+            MemoriaUsadaMB = memoryUsed,
+            MemoriaTotalMB = totalMemory,
+            CollectionsGC0 = GC.CollectionCount(0),
+            CollectionsGC1 = GC.CollectionCount(1),
+            CollectionsGC2 = GC.CollectionCount(2)
+        };
     }
 }

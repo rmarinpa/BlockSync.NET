@@ -95,6 +95,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine();
     Console.WriteLine("📡 Endpoints disponibles:");
     Console.WriteLine("   GET  /api/sync/status        - Estado del sistema");
+    Console.WriteLine("   GET  /api/sync/diagnostics   - 🔬 Diagnóstico completo (demuestra 1M de registros)");
     Console.WriteLine("   POST /api/sync               - Ejecutar sincronización");
     Console.WriteLine("   POST /api/sync/hack/{y}/{m}  - Simular corrupción");
     Console.WriteLine("   POST /api/sync/reset         - Reiniciar sistema");

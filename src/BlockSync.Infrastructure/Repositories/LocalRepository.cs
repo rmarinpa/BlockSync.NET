@@ -1,7 +1,7 @@
 using BlockSync.Domain.Entities;
 using BlockSync.Domain.Interfaces;
 using BlockSync.Domain.ValueObjects;
-using BlockSync.Infrastructure.Services;
+using BlockSync.Application.Services;
 using Microsoft.Extensions.Logging;
 
 namespace BlockSync.Infrastructure.Repositories;
@@ -170,6 +170,27 @@ public class LocalRepository : ISyncDestination
                 .ToList();
 
             return Task.FromResult(ventas);
+        }
+    }
+
+    /// <summary>
+    /// Obtiene TODOS los registros (para diagnósticos)
+    /// </summary>
+    public Task<List<Venta>> GetAllDataAsync()
+    {
+        lock (_lock)
+        {
+            var copias = _data.Select(v => new Venta
+            {
+                Id = v.Id,
+                FechaVenta = v.FechaVenta,
+                Cliente = v.Cliente,
+                Producto = v.Producto,
+                Monto = v.Monto,
+                Periodo = v.Periodo
+            }).ToList();
+
+            return Task.FromResult(copias);
         }
     }
 }

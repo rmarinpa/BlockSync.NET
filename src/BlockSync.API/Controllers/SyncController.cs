@@ -193,4 +193,29 @@ public class SyncController : ControllerBase
         var comparison = await _syncEngine.GetHashComparisonAsync();
         return Ok(comparison);
     }
+
+    /// <summary>
+    /// Obtiene diagnóstico completo del sistema con estadísticas detalladas.
+    /// Demuestra que los datos son reales y no hardcodeados mostrando:
+    /// - Conteo exacto de registros en origen y destino
+    /// - Estadísticas de montos (total, promedio, mínimo, máximo)
+    /// - Clientes y productos únicos
+    /// - Distribución por periodos
+    /// - Muestra aleatoria de registros
+    /// - Uso de memoria
+    /// </summary>
+    /// <returns>Diagnóstico completo con estadísticas detalladas</returns>
+    /// <response code="200">Diagnóstico obtenido exitosamente</response>
+    [HttpGet("diagnostics")]
+    [ProducesResponseType(typeof(DiagnosticsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<DiagnosticsResponse>> GetDiagnostics()
+    {
+        _logger.LogInformation("🔬 Solicitando diagnóstico completo del sistema...");
+
+        var diagnostics = await _syncEngine.GetDiagnosticsAsync();
+
+        _logger.LogInformation($"📊 Diagnóstico completado: {diagnostics.Origen.TotalRegistros:N0} registros en origen");
+
+        return Ok(diagnostics);
+    }
 }
