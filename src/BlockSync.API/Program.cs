@@ -1,5 +1,8 @@
 using BlockSync.Application.Interfaces;
 using BlockSync.Application.Services;
+using BlockSync.Application.Validation;
+using BlockSync.Domain.Configuration;
+using BlockSync.Domain.Entities;
 using BlockSync.Domain.Interfaces;
 using BlockSync.Infrastructure.Repositories;
 using BlockSync.Infrastructure.Services;
@@ -43,10 +46,62 @@ builder.Services.AddSwaggerGen(options =>
 
 // ========== INYECCIÓN DE DEPENDENCIAS ==========
 
+// Cargar y validar configuración de mapeo de base de datos
+var databaseMapping = builder.Configuration.GetSection("DatabaseMapping").Get<DatabaseMappingConfiguration>();
+if (databaseMapping != null)
+{
+    var validator = new MappingConfigValidator();
+    var validationResult = validator.Validate(databaseMapping);
+
+    if (!validationResult.IsValid)
+    {
+        Console.WriteLine("❌ Error en configuración de DatabaseMapping:");
+        foreach (var error in validationResult.Errors)
+        {
+            Console.WriteLine($"   - {error}");
+        }
+        throw new InvalidOperationException("La configuración de DatabaseMapping contiene errores");
+    }
+
+    // Registrar configuración como Singleton
+    builder.Services.AddSingleton(databaseMapping);
+    Console.WriteLine("✅ DatabaseMapping configurado y validado correctamente");
+}
+
 // Repositorios SQLite (Scoped para conexiones por request)
 // SEPARADOS: source.db para origen, destination.db para destino
 builder.Services.AddScoped<ISyncSource, SqliteSourceRepository>();
 builder.Services.AddScoped<ISyncDestination, SqliteDestinationRepository>();
+
+// ========== REPOSITORIO GENÉRICO (Alternativa flexible) ==========
+// NOTA: Para usar GenericSyncRepository en lugar de los repositorios específicos,
+// descomentar las siguientes líneas y comentar las anteriores:
+//
+// builder.Services.AddScoped<ISyncSource>(sp =>
+// {
+//     var config = sp.GetRequiredService<DatabaseMappingConfiguration>();
+//     var logger = sp.GetRequiredService<ILogger<GenericSyncRepository<Venta>>>();
+//     return new GenericSyncRepository<Venta>(
+//         config.Source,
+//         "Ventas",
+//         config.DataTransformations,
+//         logger,
+//         batchSize: 5000
+//     );
+// });
+//
+// builder.Services.AddScoped<ISyncDestination>(sp =>
+// {
+//     var config = sp.GetRequiredService<DatabaseMappingConfiguration>();
+//     var logger = sp.GetRequiredService<ILogger<GenericSyncRepository<Venta>>>();
+//     return new GenericSyncRepository<Venta>(
+//         config.Destination,
+//         "Ventas",
+//         config.DataTransformations,
+//         logger,
+//         batchSize: 5000
+//     );
+// });
 
 // Seeder de datos (Scoped para permitir inicialización bajo demanda)
 builder.Services.AddScoped<SqliteDataSeeder>();
