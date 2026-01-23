@@ -74,6 +74,20 @@ Para demostrar la potencia del motor, utiliza los endpoints de simulación inclu
 | **Uso de Red** | 50 GB / día | 50 MB / día | **Reducción masiva** |
 | **RAM Server** | Alta (Picos de OOM) | Baja (Estable) | **Estabilidad** |
 
+## 📚 Documentación Completa
+
+Toda la documentación técnica está organizada en el directorio `docs/`:
+
+- **[docs/CLAUDE.md](./docs/CLAUDE.md)** - Guía completa del proyecto y arquitectura
+- **[docs/architecture/](./docs/architecture/)** - Diseños arquitectónicos
+  - [Flexible Database Design](./docs/architecture/flexible-database-design.md) - Sistema de BD configurable
+- **[docs/guides/](./docs/guides/)** - Guías y tutoriales
+  - [Flexible Database QuickStart](./docs/guides/flexible-database-quickstart.md) - Ejemplos prácticos
+- **[docs/reference/](./docs/reference/)** - Referencias técnicas
+  - [SQLite Queries & Verification](./docs/reference/sqlite-queries-and-verification.md) - Queries y verificación
+
+Ver **[docs/README.md](./docs/README.md)** para el índice completo de documentación.
+
 ## ⚖️ Licencia
 
 Distribuido bajo la licencia MIT. Ver `LICENSE` para más información.
