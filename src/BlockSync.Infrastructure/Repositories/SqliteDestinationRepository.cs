@@ -325,4 +325,165 @@ public class SqliteDestinationRepository : ISyncDestination
         _logger.LogInformation("📦 SQLite Destination: {Count} registros totales descargados", ventas.Count);
         return ventas;
     }
+
+    #region SyncLedger Methods (Blockchain Metadata)
+
+    /// <summary>
+    /// Inserta o actualiza una entrada en el ledger de sincronización
+    /// </summary>
+    public async Task UpsertLedgerEntryAsync(SyncLedgerEntry entry)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var sql = @"
+            INSERT INTO SyncLedger (PeriodoId, Hash, Estado, UltimaSync, TotalRegistros, SumaMontoCentavos, UltimaAccion, CreatedAt, UpdatedAt)
+            VALUES (@PeriodoId, @Hash, @Estado, @UltimaSync, @TotalRegistros, @SumaMontoCentavos, @UltimaAccion, @CreatedAt, @UpdatedAt)
+            ON CONFLICT(PeriodoId) DO UPDATE SET
+                Hash = @Hash,
+                Estado = @Estado,
+                UltimaSync = @UltimaSync,
+                TotalRegistros = @TotalRegistros,
+                SumaMontoCentavos = @SumaMontoCentavos,
+                UltimaAccion = @UltimaAccion,
+                UpdatedAt = @UpdatedAt";
+
+        await connection.ExecuteAsync(
+            sql,
+            new
+            {
+                entry.PeriodoId,
+                entry.Hash,
+                Estado = entry.Estado.ToString(),
+                UltimaSync = entry.UltimaSync.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                entry.TotalRegistros,
+                entry.SumaMontoCentavos,
+                UltimaAccion = entry.UltimaAccion.ToString(),
+                CreatedAt = entry.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                UpdatedAt = entry.UpdatedAt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            },
+            commandTimeout: _commandTimeout);
+
+        _logger.LogInformation("📒 Ledger: Actualizado {Periodo} - {Estado} - {Accion}",
+            entry.PeriodoId, entry.Estado, entry.UltimaAccion);
+    }
+
+    /// <summary>
+    /// Obtiene todas las entradas del ledger
+    /// </summary>
+    public async Task<List<SyncLedgerEntry>> GetLedgerEntriesAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var sql = @"
+            SELECT
+                PeriodoId,
+                Hash,
+                Estado,
+                UltimaSync,
+                TotalRegistros,
+                SumaMontoCentavos,
+                UltimaAccion,
+                CreatedAt,
+                UpdatedAt
+            FROM SyncLedger
+            ORDER BY PeriodoId";
+
+        var rows = await connection.QueryAsync<dynamic>(
+            sql,
+            commandTimeout: _commandTimeout);
+
+        var entries = rows.Select(row => new SyncLedgerEntry
+        {
+            PeriodoId = (string)row.PeriodoId,
+            Hash = (string)row.Hash,
+            Estado = Enum.Parse<SyncEstado>((string)row.Estado),
+            UltimaSync = DateTime.Parse((string)row.UltimaSync),
+            TotalRegistros = (int)(long)row.TotalRegistros,
+            SumaMontoCentavos = (long)row.SumaMontoCentavos,
+            UltimaAccion = Enum.Parse<SyncAccion>((string)row.UltimaAccion),
+            CreatedAt = DateTime.Parse((string)row.CreatedAt),
+            UpdatedAt = DateTime.Parse((string)row.UpdatedAt)
+        }).ToList();
+
+        _logger.LogInformation("📒 Ledger: {Count} entradas recuperadas", entries.Count);
+        return entries;
+    }
+
+    /// <summary>
+    /// Obtiene una entrada específica del ledger
+    /// </summary>
+    public async Task<SyncLedgerEntry?> GetLedgerEntryAsync(string periodoId)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var sql = @"
+            SELECT
+                PeriodoId,
+                Hash,
+                Estado,
+                UltimaSync,
+                TotalRegistros,
+                SumaMontoCentavos,
+                UltimaAccion,
+                CreatedAt,
+                UpdatedAt
+            FROM SyncLedger
+            WHERE PeriodoId = @PeriodoId";
+
+        var row = await connection.QuerySingleOrDefaultAsync<dynamic>(
+            sql,
+            new { PeriodoId = periodoId },
+            commandTimeout: _commandTimeout);
+
+        if (row == null)
+            return null;
+
+        return new SyncLedgerEntry
+        {
+            PeriodoId = (string)row.PeriodoId,
+            Hash = (string)row.Hash,
+            Estado = Enum.Parse<SyncEstado>((string)row.Estado),
+            UltimaSync = DateTime.Parse((string)row.UltimaSync),
+            TotalRegistros = (int)(long)row.TotalRegistros,
+            SumaMontoCentavos = (long)row.SumaMontoCentavos,
+            UltimaAccion = Enum.Parse<SyncAccion>((string)row.UltimaAccion),
+            CreatedAt = DateTime.Parse((string)row.CreatedAt),
+            UpdatedAt = DateTime.Parse((string)row.UpdatedAt)
+        };
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas del ledger
+    /// </summary>
+    public async Task<(int total, int sincronizados, int corruptos, int pendientes, int errores)> GetLedgerStatsAsync()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync();
+
+        var sql = @"
+            SELECT
+                COUNT(*) as Total,
+                COALESCE(SUM(CASE WHEN Estado = 'SINCRONIZADO' THEN 1 ELSE 0 END), 0) as Sincronizados,
+                COALESCE(SUM(CASE WHEN Estado = 'CORRUPTO' THEN 1 ELSE 0 END), 0) as Corruptos,
+                COALESCE(SUM(CASE WHEN Estado = 'PENDIENTE' THEN 1 ELSE 0 END), 0) as Pendientes,
+                COALESCE(SUM(CASE WHEN Estado = 'ERROR' THEN 1 ELSE 0 END), 0) as Errores
+            FROM SyncLedger";
+
+        var row = await connection.QuerySingleAsync<dynamic>(
+            sql,
+            commandTimeout: _commandTimeout);
+
+        return (
+            total: (int)(long)row.Total,
+            sincronizados: (int)(long)row.Sincronizados,
+            corruptos: (int)(long)row.Corruptos,
+            pendientes: (int)(long)row.Pendientes,
+            errores: (int)(long)row.Errores
+        );
+    }
+
+    #endregion
 }

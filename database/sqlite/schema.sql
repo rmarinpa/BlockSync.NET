@@ -26,6 +26,35 @@ CREATE INDEX IX_Ventas_Periodo ON Ventas(Periodo, FechaVenta, MontoCentavos);
 CREATE INDEX IX_Ventas_FechaVenta ON Ventas(FechaVenta);
 
 -- ============================================================================
+-- Tabla SyncLedger - Metadata Blockchain para tracking de sincronización
+-- ============================================================================
+-- Esta tabla actúa como un "blockchain ledger" registrando el estado de cada
+-- periodo sincronizado. Permite auditoría completa y detección de anomalías.
+-- ============================================================================
+
+DROP TABLE IF EXISTS SyncLedger;
+
+CREATE TABLE SyncLedger (
+    PeriodoId TEXT PRIMARY KEY,             -- Periodo en formato yyyy-MM
+    Hash TEXT NOT NULL,                      -- Hash MD5 del bloque sincronizado
+    Estado TEXT NOT NULL                     -- SINCRONIZADO, CORRUPTO, PENDIENTE, ERROR
+        CHECK(Estado IN ('SINCRONIZADO', 'CORRUPTO', 'PENDIENTE', 'ERROR')),
+    UltimaSync TEXT NOT NULL,                -- Timestamp ISO 8601 de última sincronización
+    TotalRegistros INTEGER NOT NULL,         -- Cantidad de registros en el bloque
+    SumaMontoCentavos INTEGER NOT NULL,      -- Suma de montos en centavos
+    UltimaAccion TEXT NOT NULL               -- SKIP, INSERT, REPAIR
+        CHECK(UltimaAccion IN ('SKIP', 'INSERT', 'REPAIR')),
+    CreatedAt TEXT NOT NULL DEFAULT (datetime('now')),  -- Timestamp de creación
+    UpdatedAt TEXT NOT NULL DEFAULT (datetime('now'))   -- Timestamp de actualización
+);
+
+-- Índice para consultas por estado
+CREATE INDEX IX_SyncLedger_Estado ON SyncLedger(Estado);
+
+-- Índice para consultas por fecha de sincronización
+CREATE INDEX IX_SyncLedger_UltimaSync ON SyncLedger(UltimaSync DESC);
+
+-- ============================================================================
 -- Notas de implementación (OPTIMIZADO):
 -- ============================================================================
 -- 1. BLOB para GUIDs: 16 bytes vs ~36 bytes en TEXT (ahorro de 55%)

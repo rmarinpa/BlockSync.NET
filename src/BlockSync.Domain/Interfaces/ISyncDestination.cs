@@ -58,4 +58,31 @@ public interface ISyncDestination
     /// Obtiene TODOS los registros (para diagnósticos)
     /// </summary>
     Task<List<Venta>> GetAllDataAsync();
+
+    // ========== Métodos del Ledger (Blockchain Metadata) ==========
+
+    /// <summary>
+    /// Inserta o actualiza una entrada en el ledger de sincronización
+    /// </summary>
+    /// <param name="entry">Entrada del ledger con metadata de sincronización</param>
+    Task UpsertLedgerEntryAsync(SyncLedgerEntry entry);
+
+    /// <summary>
+    /// Obtiene todas las entradas del ledger
+    /// </summary>
+    /// <returns>Lista de todas las entradas del ledger ordenadas por periodo</returns>
+    Task<List<SyncLedgerEntry>> GetLedgerEntriesAsync();
+
+    /// <summary>
+    /// Obtiene una entrada específica del ledger
+    /// </summary>
+    /// <param name="periodoId">ID del periodo a buscar</param>
+    /// <returns>Entrada del ledger o null si no existe</returns>
+    Task<SyncLedgerEntry?> GetLedgerEntryAsync(string periodoId);
+
+    /// <summary>
+    /// Obtiene estadísticas agregadas del ledger
+    /// </summary>
+    /// <returns>Tupla con (total, sincronizados, corruptos, pendientes, errores)</returns>
+    Task<(int total, int sincronizados, int corruptos, int pendientes, int errores)> GetLedgerStatsAsync();
 }

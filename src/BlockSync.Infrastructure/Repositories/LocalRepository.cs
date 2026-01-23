@@ -193,4 +193,30 @@ public class LocalRepository : ISyncDestination
             return Task.FromResult(copias);
         }
     }
+
+    // ========== Ledger Methods (Stub - No-op for in-memory) ==========
+
+    public Task UpsertLedgerEntryAsync(SyncLedgerEntry entry)
+    {
+        // No-op: LocalRepository no mantiene ledger persistente
+        return Task.CompletedTask;
+    }
+
+    public Task<List<SyncLedgerEntry>> GetLedgerEntriesAsync()
+    {
+        // No-op: Retornar lista vacía
+        return Task.FromResult(new List<SyncLedgerEntry>());
+    }
+
+    public Task<SyncLedgerEntry?> GetLedgerEntryAsync(string periodoId)
+    {
+        // No-op: Siempre retorna null
+        return Task.FromResult<SyncLedgerEntry?>(null);
+    }
+
+    public Task<(int total, int sincronizados, int corruptos, int pendientes, int errores)> GetLedgerStatsAsync()
+    {
+        // No-op: Retornar todos en cero
+        return Task.FromResult((0, 0, 0, 0, 0));
+    }
 }

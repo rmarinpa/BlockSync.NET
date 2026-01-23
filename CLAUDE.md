@@ -69,7 +69,7 @@ The project follows **strict Clean Architecture** with dependency flow: API → 
 
 **API** - Depends on Infrastructure + Application
 - ASP.NET Core Web API with **Controllers** (not Minimal API)
-- Single controller: `SyncController` with 6 endpoints
+- Single controller: `SyncController` with 7 endpoints
 - Dependency injection configured in `Program.cs`
 
 ### Critical Architecture Note
@@ -116,6 +116,7 @@ All endpoints are in `SyncController.cs` under route `/api/sync`:
 |--------|----------|---------|
 | GET | `/status` | Show source/destination state and sync status |
 | GET | `/diagnostics` | **Proof of 1M records** - detailed statistics, unique clients/products, random samples |
+| GET | `/ledger` | **Blockchain metadata** - sync history with INSERT/REPAIR/SKIP actions per block |
 | POST | `/` | Execute full synchronization (SKIP/INSERT/REPAIR) |
 | POST | `/hack/{anio}/{mes}` | Simulate data corruption for testing REPAIR logic |
 | POST | `/reset` | Clear destination and restore source to initial state |
@@ -331,3 +332,127 @@ curl -X POST http://localhost:5000/api/sync | jq '.resumen'
 ✅ Seed optimizado (~22 segundos para 1M registros)
 ✅ Schema optimizado con tipos eficientes
 ✅ Hack/Corrupt/Repair completamente funcional
+
+## Blockchain Ledger (SyncLedger)
+
+BlockSync.NET incluye un **ledger persistente** al estilo blockchain que registra toda la metadata de sincronización en la tabla `SyncLedger`. Este ledger mantiene un historial completo y auditable de todas las operaciones de sincronización.
+
+### Tabla SyncLedger
+
+La tabla está ubicada únicamente en `destination.db` (sistema local) y registra:
+
+```sql
+CREATE TABLE SyncLedger (
+    PeriodoId TEXT PRIMARY KEY,           -- "2023-06" (identificador único del bloque)
+    Hash TEXT NOT NULL,                   -- Hash MD5 del bloque
+    Estado TEXT NOT NULL,                 -- SINCRONIZADO | CORRUPTO | PENDIENTE | ERROR
+    UltimaSync TEXT NOT NULL,             -- Timestamp de última sincronización
+    TotalRegistros INTEGER NOT NULL,      -- Cantidad de registros en el bloque
+    SumaMontoCentavos INTEGER NOT NULL,   -- Suma de montos (en centavos)
+    UltimaAccion TEXT NOT NULL,           -- SKIP | INSERT | REPAIR
+    CreatedAt TEXT NOT NULL,              -- Timestamp de creación
+    UpdatedAt TEXT NOT NULL               -- Timestamp de última actualización
+);
+```
+
+### Entidad Domain: SyncLedgerEntry
+
+```csharp
+public class SyncLedgerEntry
+{
+    public string PeriodoId { get; set; }
+    public string Hash { get; set; }
+    public SyncEstado Estado { get; set; }      // enum: SINCRONIZADO, CORRUPTO, PENDIENTE, ERROR
+    public DateTime UltimaSync { get; set; }
+    public int TotalRegistros { get; set; }
+    public long SumaMontoCentavos { get; set; }
+    public SyncAccion UltimaAccion { get; set; } // enum: SKIP, INSERT, REPAIR
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+```
+
+### Funcionalidad del Ledger
+
+El ledger se actualiza **automáticamente** en cada sincronización:
+
+1. **Primera sincronización (INSERT):**
+   - Crea nueva entrada con `UltimaAccion = INSERT`
+   - Estado = SINCRONIZADO
+   - Registra hash, total de registros y suma de montos
+
+2. **Sincronizaciones subsecuentes (SKIP):**
+   - Actualiza `UltimaAccion = SKIP`
+   - Actualiza `UltimaSync` y `UpdatedAt`
+   - Hash y datos permanecen iguales
+
+3. **Detección de corrupción (REPAIR):**
+   - Actualiza `UltimaAccion = REPAIR`
+   - Actualiza hash, suma de montos y total de registros
+   - Actualiza `UltimaSync` y `UpdatedAt`
+
+### Endpoint GET /api/sync/ledger
+
+Retorna el historial completo de sincronización:
+
+```json
+{
+  "timestamp": "2026-01-23T18:05:15Z",
+  "sistema": "BlockSync.NET - Blockchain Ledger",
+  "stats": {
+    "totalBloques": 49,
+    "sincronizados": 49,
+    "corruptos": 0,
+    "pendientes": 0,
+    "errores": 0,
+    "porcentajeSincronizado": 100
+  },
+  "entradas": [
+    {
+      "periodo": "2023-06",
+      "hash": "31eeb42279bf0a01df0cbbf8571ef893",
+      "estado": "SINCRONIZADO",
+      "ultimaSync": "2026-01-23T15:05:55.132-03:00",
+      "totalRegistros": 20183,
+      "sumaMonto": 50390128.43,
+      "ultimaAccion": "SKIP",
+      "createdAt": "2026-01-23T15:04:48.807-03:00",
+      "updatedAt": "2026-01-23T15:05:55.132-03:00"
+    }
+  ]
+}
+```
+
+### Beneficios del Ledger
+
+✅ **Auditoría completa**: Historial de todas las sincronizaciones por periodo
+✅ **Trazabilidad**: Saber cuándo fue la última sync de cada bloque
+✅ **Detección de anomalías**: Ver qué bloques han sido reparados
+✅ **Estadísticas**: Porcentaje de sincronización, bloques corruptos, etc.
+✅ **Blockchain-inspired**: Metadata inmutable con timestamps de creación/actualización
+✅ **Persistente**: Sobrevive reinicios de la aplicación
+
+### Testing del Ledger
+
+```bash
+# Verificar ledger vacío
+curl http://localhost:5000/api/sync/ledger | jq '.stats'
+
+# Ejecutar sincronización inicial
+curl -X POST http://localhost:5000/api/sync/reset
+curl -X POST http://localhost:5000/api/sync
+
+# Verificar ledger con 49 bloques INSERT
+curl http://localhost:5000/api/sync/ledger | jq '.stats'
+
+# Corromper un bloque
+curl -X POST http://localhost:5000/api/sync/hack/2023/6
+
+# Reparar y verificar acción REPAIR en ledger
+curl -X POST http://localhost:5000/api/sync
+curl http://localhost:5000/api/sync/ledger | jq '.entradas[] | select(.periodo == "2023-06")'
+
+# Sync idempotente - verificar acción SKIP
+curl -X POST http://localhost:5000/api/sync
+curl http://localhost:5000/api/sync/ledger | jq '.entradas[] | select(.periodo == "2023-06")'
+```

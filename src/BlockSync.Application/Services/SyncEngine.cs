@@ -93,6 +93,9 @@ public class SyncEngine : ISyncEngine
 
                         report.BloquesInsertados++;
                         report.TotalRegistrosInsertados += data.Count;
+
+                        // Actualizar ledger con INSERT exitoso
+                        await UpdateLedgerAsync(sourceHeader, SyncAccion.INSERT);
                     }
                     else if (sourceHeader.Hash == destHeader.Hash)
                     {
@@ -105,6 +108,9 @@ public class SyncEngine : ISyncEngine
                         blockResult.Mensaje = "Sin cambios detectados";
 
                         report.BloquesOmitidos++;
+
+                        // Actualizar ledger con SKIP exitoso
+                        await UpdateLedgerAsync(sourceHeader, SyncAccion.SKIP);
                     }
                     else
                     {
@@ -130,6 +136,9 @@ public class SyncEngine : ISyncEngine
 
                         report.BloquesReparados++;
                         report.TotalRegistrosInsertados += data.Count;
+
+                        // Actualizar ledger con REPAIR exitoso
+                        await UpdateLedgerAsync(sourceHeader, SyncAccion.REPAIR);
                     }
 
                     report.TotalRegistrosProcesados += blockResult.RegistrosProcesados;
@@ -425,5 +434,65 @@ public class SyncEngine : ISyncEngine
             CollectionsGC1 = GC.CollectionCount(1),
             CollectionsGC2 = GC.CollectionCount(2)
         };
+    }
+
+    /// <summary>
+    /// Obtiene el ledger de sincronización (Blockchain metadata)
+    /// </summary>
+    public async Task<LedgerResponse> GetLedgerAsync()
+    {
+        _logger.LogInformation("📒 Obteniendo ledger de sincronización...");
+
+        var entries = await _destination.GetLedgerEntriesAsync();
+        var (total, sincronizados, corruptos, pendientes, errores) = await _destination.GetLedgerStatsAsync();
+
+        var response = new LedgerResponse
+        {
+            Timestamp = DateTime.UtcNow,
+            Stats = new LedgerStats
+            {
+                TotalBloques = total,
+                Sincronizados = sincronizados,
+                Corruptos = corruptos,
+                Pendientes = pendientes,
+                Errores = errores,
+                PorcentajeSincronizado = total > 0 ? (double)sincronizados / total * 100 : 0
+            },
+            Entradas = entries.Select(LedgerEntryDto.FromEntity).ToList()
+        };
+
+        _logger.LogInformation("📒 Ledger obtenido: {Total} entradas ({Sincronizados} sincronizados, {Corruptos} corruptos)",
+            total, sincronizados, corruptos);
+
+        return response;
+    }
+
+    /// <summary>
+    /// Actualiza el ledger de sincronización con la metadata del bloque sincronizado
+    /// </summary>
+    private async Task UpdateLedgerAsync(BlockHeader header, SyncAccion accion)
+    {
+        try
+        {
+            var entry = new SyncLedgerEntry
+            {
+                PeriodoId = header.Periodo,
+                Hash = header.Hash,
+                Estado = SyncEstado.SINCRONIZADO,
+                UltimaSync = DateTime.UtcNow,
+                TotalRegistros = header.TotalRegistros,
+                SumaMontoCentavos = (long)(header.SumaMonto * 100),
+                UltimaAccion = accion,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _destination.UpsertLedgerEntryAsync(entry);
+        }
+        catch (Exception ex)
+        {
+            // Log error pero no fallar la sincronización si el ledger falla
+            _logger.LogWarning(ex, "⚠️ Error al actualizar ledger para periodo {Periodo}", header.Periodo);
+        }
     }
 }

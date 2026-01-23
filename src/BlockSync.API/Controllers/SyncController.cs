@@ -228,4 +228,24 @@ public class SyncController : ControllerBase
 
         return Ok(diagnostics);
     }
+
+    /// <summary>
+    /// Obtiene el ledger de sincronización (Blockchain Metadata).
+    /// Muestra el historial completo de sincronizaciones con estado de cada bloque.
+    /// Incluye estadísticas agregadas y detalles de cada periodo sincronizado.
+    /// </summary>
+    /// <returns>Ledger completo con metadata de sincronización</returns>
+    /// <response code="200">Ledger obtenido exitosamente</response>
+    [HttpGet("ledger")]
+    [ProducesResponseType(typeof(LedgerResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<LedgerResponse>> GetLedger()
+    {
+        _logger.LogInformation("📒 Solicitando ledger de sincronización...");
+
+        var ledger = await _syncEngine.GetLedgerAsync();
+
+        _logger.LogInformation("📒 Ledger obtenido: {Total} bloques", ledger.Stats.TotalBloques);
+
+        return Ok(ledger);
+    }
 }

@@ -37,4 +37,9 @@ public interface ISyncEngine
     /// Obtiene diagnóstico detallado del sistema para demostrar datos reales
     /// </summary>
     Task<DiagnosticsResponse> GetDiagnosticsAsync();
+
+    /// <summary>
+    /// Obtiene el ledger de sincronización (Blockchain metadata)
+    /// </summary>
+    Task<LedgerResponse> GetLedgerAsync();
 }
