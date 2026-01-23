@@ -44,9 +44,9 @@ builder.Services.AddSwaggerGen(options =>
 // ========== INYECCIÓN DE DEPENDENCIAS ==========
 
 // Repositorios SQLite (Scoped para conexiones por request)
-// El mismo SqliteRepository se usa tanto para origen como destino
-builder.Services.AddScoped<ISyncSource, SqliteRepository>();
-builder.Services.AddScoped<ISyncDestination, SqliteRepository>();
+// SEPARADOS: source.db para origen, destination.db para destino
+builder.Services.AddScoped<ISyncSource, SqliteSourceRepository>();
+builder.Services.AddScoped<ISyncDestination, SqliteDestinationRepository>();
 
 // Seeder de datos (Scoped para permitir inicialización bajo demanda)
 builder.Services.AddScoped<SqliteDataSeeder>();

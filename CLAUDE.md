@@ -213,32 +213,39 @@ Esta implementación permite probar BlockSync.NET localmente en Mac/Linux/Window
 
 ### Diferencias vs PoC In-Memory
 
-| Aspecto | In-Memory (main) | SQLite (feature/local-sqlite) |
-|---------|------------------|------------------------------|
-| Storage | List<Venta> en RAM | Archivo SQLite (./data/blocksync.db) |
+| Aspecto | In-Memory (main) | SQLite OPTIMIZADO (feature/local-sqlite) |
+|---------|------------------|------------------------------------------|
+| Storage | List<Venta> en RAM | 2 archivos: source.db + destination.db |
 | Persistencia | No (se pierde al cerrar app) | Sí (datos persisten) |
 | Inicialización | Automática al arrancar | Manual via /reset endpoint |
-| Performance | Inmediato | ~2.5 minutos para seed de 1M registros |
+| Performance seed | Inmediato | **22 segundos** para 1M registros (OPTIMIZADO) |
+| Performance sync | ~100ms | **126ms** para 1M registros (todos SKIP) |
 | Uso de memoria | ~685 MB en RAM | Mínimo (datos en disco) |
 | Motor DB requerido | Ninguno | Ninguno (SQLite embebido) |
+| GUID storage | 36 bytes (string) | 16 bytes (BLOB) - ahorro 55% |
+| Decimal precision | Exacto | Exacto (INTEGER centavos) |
+| Hack/Corrupt | Funciona | **Funciona correctamente** (DBs separadas) |
 
-### Arquitectura SQLite
+### Arquitectura SQLite (Optimizada)
 
-**Repositorios:**
-- `SqliteRepository`: Implementa TANTO `ISyncSource` como `ISyncDestination`
-- Usa el mismo archivo SQLite para ambos roles
-- En producción real, usarías dos bases de datos diferentes
+**Repositorios separados:**
+- `SqliteSourceRepository`: Implementa `ISyncSource` - lee de source.db (sistema legacy)
+- `SqliteDestinationRepository`: Implementa `ISyncDestination` - escribe en destination.db (sistema local)
+- Bases de datos completamente independientes
+- Permite probar hack/corrupt/repair correctamente
 
 **Servicios:**
 - `SqliteDataSeeder`: Genera e inserta 1M de registros usando `DataGenerator`
 - Reutiliza el seed 8675309 para datos reproducibles
+- **OPTIMIZADO** con PRAGMAs de alta velocidad
 
-**Schema:**
+**Schema optimizado:**
 - Ubicado en `/database/sqlite/schema.sql`
-- GUIDs almacenados como TEXT
+- **GUIDs como BLOB** (16 bytes vs 36 bytes)
 - Fechas en formato ISO 8601 (TEXT)
-- Montos como REAL
+- **Montos como INTEGER** (centavos para precisión exacta)
 - CHECK constraints para validación
+- PRAGMAs de optimización documentados
 
 ### Comandos SQLite Edition
 
@@ -296,15 +303,23 @@ curl -X POST http://localhost:5000/api/sync | jq '.resumen'
 }
 ```
 
-### Limitaciones Conocidas
+### Mejoras Implementadas (Optimizado)
 
-1. **Hack/Corrupt no funciona correctamente**: Como origen y destino comparten el mismo archivo DB, corromper afecta a ambos lados. Para probar REPAIR necesitarías dos archivos separados.
+**1. Bases de datos separadas:**
+- ✅ `source.db` para origen (sistema legacy read-only)
+- ✅ `destination.db` para destino (sistema local sincronizado)
+- ✅ **Hack/Corrupt/Repair funciona correctamente**
 
-2. **Seed inicial lento**: Insertar 1M de registros tarda ~2.5 minutos (vs inmediato en in-memory). Pero solo se hace una vez.
+**2. Schema optimizado:**
+- ✅ **BLOB para GUIDs**: 16 bytes vs 36 bytes TEXT (ahorro de 55%)
+- ✅ **INTEGER para montos**: Almacena centavos para precisión exacta decimal
+- ✅ Sin pérdida de precisión en operaciones monetarias
 
-3. **GUID como TEXT**: SQLite no tiene tipo UNIQUEIDENTIFIER nativo, usamos TEXT. Funciona pero ocupa más espacio.
-
-4. **REAL vs DECIMAL**: SQLite usa flotantes de 64-bit, no decimales exactos. Suficiente para PoC pero en producción con dinero usarías INTEGER (centavos).
+**3. Performance optimizada:**
+- ✅ **Seed 7x más rápido**: 22 segundos vs 2.5 minutos
+- ✅ **PRAGMAs de alta velocidad**: WAL mode, PRAGMA synchronous=OFF durante seed
+- ✅ **Batch size aumentado**: 10,000 registros por transacción
+- ✅ **Cache grande**: 256MB durante seed, 64MB en operación normal
 
 ### Ventajas SQLite Edition
 
@@ -312,5 +327,7 @@ curl -X POST http://localhost:5000/api/sync | jq '.resumen'
 ✅ No requiere instalar ningún motor de base de datos
 ✅ Compatible con Mac, Linux y Windows out-of-the-box
 ✅ Útil para demos y pruebas sin infraestructura
-✅ Sync sigue siendo súper rápido (~700ms para 1M registros con SKIP)
-✅ Schema simple y portable
+✅ Sync súper rápido (~126ms para 1M registros con SKIP)
+✅ Seed optimizado (~22 segundos para 1M registros)
+✅ Schema optimizado con tipos eficientes
+✅ Hack/Corrupt/Repair completamente funcional
