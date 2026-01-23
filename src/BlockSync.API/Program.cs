@@ -42,9 +42,15 @@ builder.Services.AddSwaggerGen(options =>
 
 // ========== INYECCIÓN DE DEPENDENCIAS ==========
 
-// Repositorios (Singleton para mantener datos en memoria durante la sesión)
-builder.Services.AddSingleton<ISyncSource, LegacyRepository>();
-builder.Services.AddSingleton<ISyncDestination, LocalRepository>();
+// ========== REPOSITORIOS DE PRODUCCIÓN (Oracle → SQL Server) ==========
+// Usa Scoped lifetime para connections de base de datos (una por request)
+builder.Services.AddScoped<ISyncSource, OracleRepository>();
+builder.Services.AddScoped<ISyncDestination, SqlServerRepository>();
+
+// ========== REPOSITORIOS IN-MEMORY (PoC / Testing) ==========
+// Descomentar para usar repositorios in-memory en lugar de bases de datos reales
+// builder.Services.AddSingleton<ISyncSource, LegacyRepository>();
+// builder.Services.AddSingleton<ISyncDestination, LocalRepository>();
 
 // Servicios de aplicación
 builder.Services.AddScoped<ISyncEngine, SyncEngine>();
@@ -86,12 +92,17 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     Console.WriteLine();
     Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
-    Console.WriteLine("║                    BLOCKSYNC.NET v1.0.0                    ║");
+    Console.WriteLine("║                BLOCKSYNC.NET v1.0.0 PRODUCTION             ║");
     Console.WriteLine("║          Motor de Sincronización Blockchain-Inspired       ║");
+    Console.WriteLine("║              Oracle (Source) → SQL Server (Dest)           ║");
     Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
     Console.WriteLine();
     Console.WriteLine("🌐 Servidor iniciado en: http://localhost:5000");
     Console.WriteLine("📚 Swagger UI disponible en: http://localhost:5000");
+    Console.WriteLine();
+    Console.WriteLine("🔗 Conexiones configuradas:");
+    Console.WriteLine("   📊 Oracle Source: " + (builder.Configuration.GetConnectionString("OracleSource") != null ? "✅ Configurado" : "❌ NO CONFIGURADO"));
+    Console.WriteLine("   💾 SQL Server Dest: " + (builder.Configuration.GetConnectionString("SqlServerDestination") != null ? "✅ Configurado" : "❌ NO CONFIGURADO"));
     Console.WriteLine();
     Console.WriteLine("📡 Endpoints disponibles:");
     Console.WriteLine("   GET  /api/sync/status        - Estado del sistema");
