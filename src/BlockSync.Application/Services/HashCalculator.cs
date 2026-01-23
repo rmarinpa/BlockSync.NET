@@ -26,6 +26,17 @@ public class HashCalculator
         var sumaMonto = ventas.Sum(v => v.Monto);
         var totalRegistros = ventas.Count;
 
+        return CalculateHash(sumaMonto, totalRegistros);
+    }
+
+    /// <summary>
+    /// Calcula el hash MD5 a partir de agregados (suma de montos y total de registros)
+    /// </summary>
+    /// <param name="sumaMonto">Suma total de montos del bloque</param>
+    /// <param name="totalRegistros">Total de registros del bloque</param>
+    /// <returns>Hash MD5 como string hexadecimal</returns>
+    public static string CalculateHash(decimal sumaMonto, int totalRegistros)
+    {
         // Crear string para hashear: "suma|count"
         var blockData = $"{sumaMonto}|{totalRegistros}";
 

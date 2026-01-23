@@ -1,0 +1,7 @@
+# Ignorar archivos de base de datos SQLite
+*.db
+*.db-shm
+*.db-wal
+
+# Permitir que la carpeta exista en git
+!.gitignore

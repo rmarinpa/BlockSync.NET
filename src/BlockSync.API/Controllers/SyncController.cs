@@ -1,5 +1,6 @@
 using BlockSync.Application.DTOs;
 using BlockSync.Application.Interfaces;
+using BlockSync.Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlockSync.API.Controllers;
@@ -15,11 +16,16 @@ public class SyncController : ControllerBase
 {
     private readonly ISyncEngine _syncEngine;
     private readonly ILogger<SyncController> _logger;
+    private readonly SqliteDataSeeder _seeder;
 
-    public SyncController(ISyncEngine syncEngine, ILogger<SyncController> logger)
+    public SyncController(
+        ISyncEngine syncEngine,
+        ILogger<SyncController> logger,
+        SqliteDataSeeder seeder)
     {
         _syncEngine = syncEngine;
         _logger = logger;
+        _seeder = seeder;
     }
 
     /// <summary>
@@ -142,6 +148,7 @@ public class SyncController : ControllerBase
 
     /// <summary>
     /// Reinicia el sistema completo (limpia destino y restaura origen)
+    /// Para SQLite: limpia la base de datos y regenera 1M de registros con Bogus
     /// </summary>
     /// <returns>Confirmación del reinicio</returns>
     /// <response code="200">Sistema reiniciado exitosamente</response>
@@ -153,17 +160,20 @@ public class SyncController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("🔄 Reiniciando sistema...");
-            await _syncEngine.ResetSystemAsync();
+            _logger.LogInformation("🔄 Reiniciando sistema SQLite...");
+
+            // Limpiar y regenerar datos en SQLite
+            await _seeder.ClearAndSeedAsync();
 
             return Ok(new ResetResponse
             {
                 Exitoso = true,
-                Mensaje = "Sistema reiniciado completamente",
+                Mensaje = "Sistema SQLite reiniciado completamente",
                 AccionesRealizadas = new List<string>
                 {
-                    "✓ Almacenamiento local limpiado",
-                    "✓ Datos de origen restaurados al estado original",
+                    "✓ Base de datos SQLite limpiada",
+                    "✓ 1,000,000 registros generados con Bogus (seed: 8675309)",
+                    "✓ 49 bloques mensuales creados (2022-01 hasta presente)",
                     "✓ Todas las corrupciones eliminadas"
                 },
                 SiguientePaso = "Ejecuta POST /api/sync para sincronizar desde cero"

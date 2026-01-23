@@ -2,6 +2,7 @@ using BlockSync.Application.Interfaces;
 using BlockSync.Application.Services;
 using BlockSync.Domain.Interfaces;
 using BlockSync.Infrastructure.Repositories;
+using BlockSync.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,12 +43,20 @@ builder.Services.AddSwaggerGen(options =>
 
 // ========== INYECCIÓN DE DEPENDENCIAS ==========
 
-// Repositorios (Singleton para mantener datos en memoria durante la sesión)
-builder.Services.AddSingleton<ISyncSource, LegacyRepository>();
-builder.Services.AddSingleton<ISyncDestination, LocalRepository>();
+// Repositorios SQLite (Scoped para conexiones por request)
+// El mismo SqliteRepository se usa tanto para origen como destino
+builder.Services.AddScoped<ISyncSource, SqliteRepository>();
+builder.Services.AddScoped<ISyncDestination, SqliteRepository>();
 
-// Servicios de aplicación
+// Seeder de datos (Scoped para permitir inicialización bajo demanda)
+builder.Services.AddScoped<SqliteDataSeeder>();
+
+// Motor de sincronización
 builder.Services.AddScoped<ISyncEngine, SyncEngine>();
+
+// ========== REPOSITORIOS IN-MEMORY (PoC original - comentados) ==========
+// builder.Services.AddSingleton<ISyncSource, LegacyRepository>();
+// builder.Services.AddSingleton<ISyncDestination, LocalRepository>();
 
 // Configurar CORS si es necesario
 builder.Services.AddCors(options =>
@@ -88,17 +97,19 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
     Console.WriteLine("║                    BLOCKSYNC.NET v1.0.0                    ║");
     Console.WriteLine("║          Motor de Sincronización Blockchain-Inspired       ║");
+    Console.WriteLine("║                     SQLite Local Edition                   ║");
     Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
     Console.WriteLine();
     Console.WriteLine("🌐 Servidor iniciado en: http://localhost:5000");
     Console.WriteLine("📚 Swagger UI disponible en: http://localhost:5000");
+    Console.WriteLine("💾 Base de datos: SQLite (./data/blocksync.db)");
     Console.WriteLine();
     Console.WriteLine("📡 Endpoints disponibles:");
     Console.WriteLine("   GET  /api/sync/status        - Estado del sistema");
     Console.WriteLine("   GET  /api/sync/diagnostics   - 🔬 Diagnóstico completo (demuestra 1M de registros)");
     Console.WriteLine("   POST /api/sync               - Ejecutar sincronización");
     Console.WriteLine("   POST /api/sync/hack/{y}/{m}  - Simular corrupción");
-    Console.WriteLine("   POST /api/sync/reset         - Reiniciar sistema");
+    Console.WriteLine("   POST /api/sync/reset         - Reiniciar sistema (regenera 1M registros)");
     Console.WriteLine("   GET  /api/sync/hashes        - Ver comparación de hashes");
     Console.WriteLine();
     Console.WriteLine("✨ Sistema listo para sincronizar datos!");

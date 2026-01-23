@@ -206,3 +206,111 @@ Swashbuckle.AspNetCore version: 6.5.0 (avoid 10.x due to OpenAPI model compatibi
 - **49 monthly blocks** spanning 2022-01 to 2026-01
 
 The system demonstrates **O(1) complexity for unchanged historical data** vs O(N) for traditional ETL.
+
+## SQLite Local Edition (Branch: feature/local-sqlite)
+
+Esta implementación permite probar BlockSync.NET localmente en Mac/Linux/Windows sin necesidad de instalar motores de base de datos. Usa SQLite como almacenamiento persistente.
+
+### Diferencias vs PoC In-Memory
+
+| Aspecto | In-Memory (main) | SQLite (feature/local-sqlite) |
+|---------|------------------|------------------------------|
+| Storage | List<Venta> en RAM | Archivo SQLite (./data/blocksync.db) |
+| Persistencia | No (se pierde al cerrar app) | Sí (datos persisten) |
+| Inicialización | Automática al arrancar | Manual via /reset endpoint |
+| Performance | Inmediato | ~2.5 minutos para seed de 1M registros |
+| Uso de memoria | ~685 MB en RAM | Mínimo (datos en disco) |
+| Motor DB requerido | Ninguno | Ninguno (SQLite embebido) |
+
+### Arquitectura SQLite
+
+**Repositorios:**
+- `SqliteRepository`: Implementa TANTO `ISyncSource` como `ISyncDestination`
+- Usa el mismo archivo SQLite para ambos roles
+- En producción real, usarías dos bases de datos diferentes
+
+**Servicios:**
+- `SqliteDataSeeder`: Genera e inserta 1M de registros usando `DataGenerator`
+- Reutiliza el seed 8675309 para datos reproducibles
+
+**Schema:**
+- Ubicado en `/database/sqlite/schema.sql`
+- GUIDs almacenados como TEXT
+- Fechas en formato ISO 8601 (TEXT)
+- Montos como REAL
+- CHECK constraints para validación
+
+### Comandos SQLite Edition
+
+**Inicializar base de datos:**
+```bash
+cd src/BlockSync.API
+sqlite3 ./data/blocksync.db < ../../database/sqlite/schema.sql
+```
+
+**Ejecutar aplicación:**
+```bash
+cd src/BlockSync.API
+dotnet run
+```
+
+**Poblar con datos de prueba:**
+```bash
+curl -X POST http://localhost:5000/api/sync/reset
+# Genera 1,000,000 registros en ~2.5 minutos
+```
+
+**Verificar datos en SQLite:**
+```bash
+sqlite3 ./data/blocksync.db "SELECT COUNT(*) FROM Ventas;"
+sqlite3 ./data/blocksync.db "SELECT Periodo, COUNT(*) FROM Ventas GROUP BY Periodo LIMIT 5;"
+```
+
+**Probar sincronización:**
+```bash
+# Verificar estado
+curl http://localhost:5000/api/sync/status | jq
+
+# Ejecutar sync (debe ser ~700ms con todos SKIP)
+curl -X POST http://localhost:5000/api/sync | jq '.resumen'
+```
+
+### Tecnologías SQLite
+
+- **Microsoft.Data.Sqlite** 10.0.2 - Driver oficial de Microsoft
+- **Dapper** 2.1.66 - Micro-ORM para queries
+- **SQLite** - Embebido en el paquete (no requiere instalación separada)
+- **Transacciones** - Para integridad en bulk inserts
+
+### Configuración (appsettings.json)
+
+```json
+{
+  "ConnectionStrings": {
+    "SqliteDatabase": "Data Source=./data/blocksync.db"
+  },
+  "DatabaseSettings": {
+    "CommandTimeout": 300,
+    "BulkInsertBatchSize": 5000
+  }
+}
+```
+
+### Limitaciones Conocidas
+
+1. **Hack/Corrupt no funciona correctamente**: Como origen y destino comparten el mismo archivo DB, corromper afecta a ambos lados. Para probar REPAIR necesitarías dos archivos separados.
+
+2. **Seed inicial lento**: Insertar 1M de registros tarda ~2.5 minutos (vs inmediato en in-memory). Pero solo se hace una vez.
+
+3. **GUID como TEXT**: SQLite no tiene tipo UNIQUEIDENTIFIER nativo, usamos TEXT. Funciona pero ocupa más espacio.
+
+4. **REAL vs DECIMAL**: SQLite usa flotantes de 64-bit, no decimales exactos. Suficiente para PoC pero en producción con dinero usarías INTEGER (centavos).
+
+### Ventajas SQLite Edition
+
+✅ Datos persisten entre reinicios de la aplicación
+✅ No requiere instalar ningún motor de base de datos
+✅ Compatible con Mac, Linux y Windows out-of-the-box
+✅ Útil para demos y pruebas sin infraestructura
+✅ Sync sigue siendo súper rápido (~700ms para 1M registros con SKIP)
+✅ Schema simple y portable
