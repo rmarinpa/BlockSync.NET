@@ -109,6 +109,16 @@ builder.Services.AddScoped<SqliteDataSeeder>();
 // Motor de sincronización
 builder.Services.AddScoped<ISyncEngine, SyncEngine>();
 
+// ========== SERVICIOS CHILECOMPRA ==========
+// HttpClient para descargar datos de ChileCompra
+builder.Services.AddHttpClient<ChileCompraApiClient>();
+
+// Servicios y repositorios de ChileCompra
+builder.Services.AddScoped<ChileCompraApiClient>();
+builder.Services.AddScoped<ChileCompraDataSeeder>();
+builder.Services.AddScoped<ChileCompraAwardsRepository>();
+builder.Services.AddScoped<SqliteAwardsDestinationRepository>();
+
 // ========== REPOSITORIOS IN-MEMORY (PoC original - comentados) ==========
 // builder.Services.AddSingleton<ISyncSource, LegacyRepository>();
 // builder.Services.AddSingleton<ISyncDestination, LocalRepository>();
@@ -160,12 +170,20 @@ app.Lifetime.ApplicationStarted.Register(() =>
     Console.WriteLine("💾 Base de datos: SQLite (./data/blocksync.db)");
     Console.WriteLine();
     Console.WriteLine("📡 Endpoints disponibles:");
+    Console.WriteLine();
+    Console.WriteLine("   🔄 SINCRONIZACIÓN (Ventas):");
     Console.WriteLine("   GET  /api/sync/status        - Estado del sistema");
     Console.WriteLine("   GET  /api/sync/diagnostics   - 🔬 Diagnóstico completo (demuestra 1M de registros)");
     Console.WriteLine("   POST /api/sync               - Ejecutar sincronización");
     Console.WriteLine("   POST /api/sync/hack/{y}/{m}  - Simular corrupción");
     Console.WriteLine("   POST /api/sync/reset         - Reiniciar sistema (regenera 1M registros)");
     Console.WriteLine("   GET  /api/sync/hashes        - Ver comparación de hashes");
+    Console.WriteLine();
+    Console.WriteLine("   🏛️ CHILECOMPRA (Datos reales):");
+    Console.WriteLine("   POST /api/chilecompra/seed   - Descargar datos de ChileCompra API");
+    Console.WriteLine("   GET  /api/chilecompra/stats  - Estadísticas de awards");
+    Console.WriteLine("   POST /api/chilecompra/sync   - Sincronizar awards");
+    Console.WriteLine("   GET  /api/chilecompra/awards/{periodo} - Ver awards de un periodo");
     Console.WriteLine();
     Console.WriteLine("✨ Sistema listo para sincronizar datos!");
     Console.WriteLine("════════════════════════════════════════════════════════════");
