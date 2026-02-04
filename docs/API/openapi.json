@@ -1,0 +1,904 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "BlockSync.NET API",
+    "description": "Motor de sincronización de datos con integridad basada en blockchain. Sincronización inteligente usando comparación de hashes inspirada en Merkle Trees.",
+    "contact": {
+      "name": "BlockSync.NET"
+    },
+    "version": "v1.0.0"
+  },
+  "paths": {
+    "/api/ChileCompra/seed": {
+      "post": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 2025
+            }
+          },
+          {
+            "name": "maxRecords",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "clearFirst",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ChileCompra/stats": {
+      "get": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ChileCompra/sync": {
+      "post": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ChileCompra/awards/{periodo}": {
+      "get": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "parameters": [
+          {
+            "name": "periodo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ChileCompra/destination/clear": {
+      "post": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/ChileCompra/destination/stats": {
+      "get": {
+        "tags": [
+          "ChileCompra"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Sync/status": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Sync": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/Sync/hack/{anio}/{mes}": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "parameters": [
+          {
+            "name": "anio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HackResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/Sync/reset": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server Error"
+          }
+        }
+      }
+    },
+    "/api/Sync/hashes": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HashComparisonResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Sync/diagnostics": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnosticsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Sync/ledger": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LedgerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BlockComparison": {
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "origen": {
+            "$ref": "#/components/schemas/BlockInfo"
+          },
+          "destino": {
+            "$ref": "#/components/schemas/BlockInfo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BlockInfo": {
+        "type": "object",
+        "properties": {
+          "hash": {
+            "type": "string",
+            "nullable": true
+          },
+          "registros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monto": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BlockSyncResult": {
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "string",
+            "nullable": true
+          },
+          "accion": {
+            "$ref": "#/components/schemas/SyncActionType"
+          },
+          "hashOrigen": {
+            "type": "string",
+            "nullable": true
+          },
+          "hashDestinoAntes": {
+            "type": "string",
+            "nullable": true
+          },
+          "registrosProcesados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "registrosInsertados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
+          },
+          "duracionMs": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DataStatistics": {
+        "type": "object",
+        "properties": {
+          "totalRegistros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalBloques": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "montoTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "montoPromedio": {
+            "type": "number",
+            "format": "double"
+          },
+          "montoMinimo": {
+            "type": "number",
+            "format": "double"
+          },
+          "montoMaximo": {
+            "type": "number",
+            "format": "double"
+          },
+          "primerRegistroId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ultimoRegistroId": {
+            "type": "string",
+            "nullable": true
+          },
+          "fechaMinima": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fechaMaxima": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "clientesUnicos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "productosUnicos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "top10PeriodosPorRegistros": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PeriodInfo"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DiagnosticsResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sistema": {
+            "type": "string",
+            "nullable": true
+          },
+          "origen": {
+            "$ref": "#/components/schemas/DataStatistics"
+          },
+          "destino": {
+            "$ref": "#/components/schemas/DataStatistics"
+          },
+          "muestraAleatoria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SampleRecord"
+            },
+            "nullable": true
+          },
+          "memoria": {
+            "$ref": "#/components/schemas/MemoryInfo"
+          },
+          "resumen": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HackResponse": {
+        "type": "object",
+        "properties": {
+          "exitoso": {
+            "type": "boolean"
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
+          },
+          "periodoAfectado": {
+            "type": "string",
+            "nullable": true
+          },
+          "instrucciones": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HashComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalPeriodos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sincronizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "faltanEnDestino": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "corruptos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloques": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockComparison"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LedgerEntryDto": {
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "string",
+            "nullable": true
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "ultimaSync": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalRegistros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sumaMonto": {
+            "type": "number",
+            "format": "double"
+          },
+          "ultimaAccion": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LedgerResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sistema": {
+            "type": "string",
+            "nullable": true
+          },
+          "stats": {
+            "$ref": "#/components/schemas/LedgerStats"
+          },
+          "entradas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LedgerStats": {
+        "type": "object",
+        "properties": {
+          "totalBloques": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sincronizados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "corruptos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendientes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errores": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "porcentajeSincronizado": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MemoryInfo": {
+        "type": "object",
+        "properties": {
+          "memoriaUsadaMB": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memoriaTotalMB": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "collectionsGC0": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "collectionsGC1": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "collectionsGC2": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PeriodInfo": {
+        "type": "object",
+        "properties": {
+          "periodo": {
+            "type": "string",
+            "nullable": true
+          },
+          "registros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "montoTotal": {
+            "type": "number",
+            "format": "double"
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "ResetResponse": {
+        "type": "object",
+        "properties": {
+          "exitoso": {
+            "type": "boolean"
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
+          },
+          "accionesRealizadas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "siguientePaso": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SampleRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cliente": {
+            "type": "string",
+            "nullable": true
+          },
+          "producto": {
+            "type": "string",
+            "nullable": true
+          },
+          "monto": {
+            "type": "number",
+            "format": "double"
+          },
+          "periodo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SyncActionType": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "SyncReport": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "duracionMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalBloques": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesOmitidos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesInsertados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesReparados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRegistrosProcesados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRegistrosInsertados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detallesBloques": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockSyncResult"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SyncResponse": {
+        "type": "object",
+        "properties": {
+          "exitoso": {
+            "type": "boolean"
+          },
+          "resumen": {
+            "$ref": "#/components/schemas/SyncSummary"
+          },
+          "reporte": {
+            "$ref": "#/components/schemas/SyncReport"
+          },
+          "resumenTexto": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SyncSummary": {
+        "type": "object",
+        "properties": {
+          "duracionMs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalBloques": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesOmitidos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesInsertados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloquesReparados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRegistrosProcesados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalRegistrosInsertados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SystemInfo": {
+        "type": "object",
+        "properties": {
+          "registros": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bloques": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "periodos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SystemStatusResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sistema": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "string",
+            "nullable": true
+          },
+          "origen": {
+            "$ref": "#/components/schemas/SystemInfo"
+          },
+          "destino": {
+            "$ref": "#/components/schemas/SystemInfo"
+          },
+          "estadoSincronizacion": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

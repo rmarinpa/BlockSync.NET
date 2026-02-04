@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-neutral-200;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900 font-sans antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neutral-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400;
+  }
+}
+
+@layer components {
+  /* Card Components */
+  .card {
+    @apply bg-white rounded-xl border border-neutral-200 shadow-sm transition-all duration-200;
+  }
+
+  .card:hover {
+    @apply shadow-md border-neutral-300;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-neutral-200 bg-neutral-50/50;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-neutral-900;
+  }
+
+  .card-content {
+    @apply p-6;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply card p-6 hover:shadow-lg transition-all duration-300;
+  }
+
+  .stat-card:hover {
+    @apply -translate-y-1;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed
+           active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-500 text-white hover:bg-primary-600
+           focus:ring-primary-500 shadow-sm hover:shadow;
+  }
+
+  .btn-secondary {
+    @apply btn bg-neutral-100 text-neutral-700 hover:bg-neutral-200
+           focus:ring-neutral-500;
+  }
+
+  .btn-success {
+    @apply btn bg-success-500 text-white hover:bg-success-600
+           focus:ring-success-500 shadow-sm hover:shadow;
+  }
+
+  .btn-danger {
+    @apply btn bg-danger-500 text-white hover:bg-danger-600
+           focus:ring-danger-500 shadow-sm hover:shadow;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-600 border border-success-200;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-50 text-warning-600 border border-warning-200;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-50 text-danger-600 border border-danger-200;
+  }
+
+  .badge-neutral {
+    @apply badge bg-neutral-100 text-neutral-600 border border-neutral-200;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-50 text-primary-600 border border-primary-200;
+  }
+
+  /* Progress Bar */
+  .progress-bar {
+    @apply h-2 bg-neutral-200 rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500 rounded-full;
+  }
+
+  /* Tables */
+  .table-container {
+    @apply card overflow-hidden;
+  }
+
+  .table {
+    @apply w-full;
+  }
+
+  .table-header {
+    @apply bg-neutral-50 text-neutral-600 font-semibold text-xs uppercase tracking-wider;
+  }
+
+  .table-row {
+    @apply border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer;
+  }
+
+  .table-cell {
+    @apply px-6 py-4 text-sm;
+  }
+
+  /* Hash Display */
+  .hash-display {
+    @apply font-mono text-xs text-neutral-600 bg-neutral-100 px-2 py-1 rounded;
+  }
+
+  .hash-full {
+    @apply font-mono text-xs text-neutral-700 bg-neutral-50 p-3 rounded border border-neutral-200 break-all;
+  }
+
+  /* Status Indicators */
+  .status-dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .status-dot-success {
+    @apply status-dot bg-success-500 animate-pulse-subtle;
+  }
+
+  .status-dot-warning {
+    @apply status-dot bg-warning-500 animate-pulse-subtle;
+  }
+
+  .status-dot-danger {
+    @apply status-dot bg-danger-500 animate-pulse-subtle;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply inline-block w-5 h-5 border-2 border-primary-200 border-t-primary-500 rounded-full animate-spin;
+  }
+
+  /* Input Fields */
+  .input {
+    @apply w-full px-4 py-2 bg-white border border-neutral-300 rounded-lg
+           text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-all duration-200;
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent;
+  }
+
+  /* Section Headers */
+  .section-header {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-neutral-900;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-neutral-500 mt-1;
+  }
+
+  /* Alert Boxes */
+  .alert {
+    @apply rounded-lg p-4 border;
+  }
+
+  .alert-success {
+    @apply alert bg-success-50 border-success-200 text-success-800;
+  }
+
+  .alert-warning {
+    @apply alert bg-warning-50 border-warning-200 text-warning-800;
+  }
+
+  .alert-danger {
+    @apply alert bg-danger-50 border-danger-200 text-danger-800;
+  }
+
+  .alert-info {
+    @apply alert bg-primary-50 border-primary-200 text-primary-800;
+  }
+
+  /* Tabs */
+  .tabs {
+    @apply flex gap-2 border-b border-neutral-200;
+  }
+
+  .tab {
+    @apply px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900
+           border-b-2 border-transparent transition-colors;
+  }
+
+  .tab-active {
+    @apply tab text-primary-600 border-primary-500;
+  }
+
+  /* Comparison Card */
+  .comparison-card {
+    @apply card overflow-hidden;
+  }
+
+  .comparison-header {
+    @apply px-6 py-4 flex items-center justify-between;
+  }
+
+  .comparison-content {
+    @apply p-6 space-y-4;
+  }
+
+  .comparison-section {
+    @apply bg-neutral-50 rounded-lg p-4 border border-neutral-200;
+  }
+
+  /* Metric Display */
+  .metric {
+    @apply text-center;
+  }
+
+  .metric-label {
+    @apply text-xs text-neutral-500 uppercase tracking-wider mb-2;
+  }
+
+  .metric-value {
+    @apply text-3xl font-bold text-neutral-900;
+  }
+
+  .metric-change {
+    @apply text-xs font-medium mt-1;
+  }
+
+  .metric-change-positive {
+    @apply metric-change text-success-600;
+  }
+
+  .metric-change-negative {
+    @apply metric-change text-danger-600;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-neutral-200 my-6;
+  }
+
+  /* Code Block */
+  .code-block {
+    @apply bg-neutral-900 text-neutral-100 p-4 rounded-lg overflow-x-auto;
+  }
+
+  .code-block pre {
+    @apply font-mono text-sm;
+  }
+}
+
+/* Utility Classes */
+.container-custom {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.grid-auto-fit {
+  @apply grid gap-6;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Animation Enhancements */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+.slide-down {
+  animation: slideDown 0.4s ease-out;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+/* Focus Visible for Accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
